@@ -1,26 +1,27 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-import base64
-
-
-
 
 term = 'gull'
-prefix = 'samples/'+term+'/positive_images'
+prefix = 'samples/' + term + '/positive_images'
+desired_images = 100
+page_size = 20
+start_index = 200
 
-os.makedirs('samples/'+term+'/positive_images', exist_ok=True)
+os.makedirs('samples/' + term + '/positive_images', exist_ok=True)
 
-url = 'https://www.google.com/search?q={term}&tbm=isch'.format(term=term)
-html = requests.get(url).text
-soup = BeautifulSoup(html, 'html.parser')
-with open('out.html', 'w+') as f:
-    f.write(html)
-birbs = soup.findAll("img", {"class" : "rg_ic" })
-print(birbs)
-for birb in birbs:
-    print(birb.src)
+for page in range(int(desired_images / page_size)):
+    image_index = start_index + (page_size * page)
 
-def decode_image_data_to_file(bytes, filename):
-    with open('samples/'+term+'/positive_images'+filename, 'wb') as f:
-        f.write(base64.decodebytes(string))
+    url = 'https://www.google.com/search?q={term}&tbm=isch&start={index}'.format(term=term, index=image_index)
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text, 'html.parser')
+
+    imgs = soup.findAll("img")
+    for i, img in enumerate(imgs):
+        img_url = img.attrs['src']
+        r = requests.get(img_url, stream=True)
+        with open(prefix + '/{term}'.format(term=term) + str(i + image_index) + '.jpg', 'wb+') as f:
+            print(f)
+            for chunk in r:
+                f.write(chunk)
